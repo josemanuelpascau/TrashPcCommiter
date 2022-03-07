@@ -1,0 +1,206 @@
+<%- include('header') -%>
+  <div class="table-responsive-sm">
+    <div class="table-responsive-sm">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th class="fijo">Array</th>
+            <th class="fijo"><select id="arraySelect"></select></th>
+            <th class="fijo"><input id="arrayName" type="text"></input></th>
+            <th class="fijo">
+              <a id="buttonEdit" class="btn btn-sm btn-warning"><img src="img/edit.png" class="icono" /> </a>
+            </th>
+            <th class="fijo">
+              <a id="buttonAdd" class="btn btn-sm btn-success">
+                <img src="img/nuevo.png" class="icono" />
+              </a>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody id="baseHead"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="testtest"></div>
+
+  <script src="row.js"></script>
+
+  <script>
+    var testTest = document.getElementById("testtest");
+
+    var commands = <%- JSON.stringify(modelo) %>;
+
+    var arrayBases = ["commit", "add", "branch", "pull", "push", "cherry-pick"];
+    var arrayLists = [];
+    var uniqueLists = [];
+    var arrayCommandRows = [];
+    
+
+    for (var i = 0; i < commands.length; i++) {
+      arrayLists.push(commands[i].array);
+    }
+
+    var uniqueLists = arrayLists.reduce(function (a, b) {
+      if (a.indexOf(b) < 0) a.push(b);
+      return a;
+    }, []);
+
+    var selectedArray = document.getElementById("arraySelect");
+    var inputName = document.getElementById("arrayName");
+
+    var opt = document.createElement("option");
+    opt.value = 0;
+    opt.innerHTML = 'New';
+    selectedArray.appendChild(opt);
+
+    for (var i = 0; i < uniqueLists.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = i + 1;
+      opt.innerHTML = uniqueLists[i];
+      selectedArray.appendChild(opt);
+    }
+
+    selectedArray.options[1].selected = "selected";
+
+    reloadRows();
+
+    document.getElementById("buttonAdd").onclick = function () {
+      addRow(0, 0);
+    };
+
+    document.getElementById("buttonEdit").onclick = function () {
+      editArray();
+    };
+
+    document.getElementById("arraySelect").onchange = function () {
+      reloadRows();
+    };
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+    function reloadRows() {
+      arrayCommandRows = [];
+
+      for (var i = 0; i < commands.length; i++) {
+        if (commands[i].array === selectedArray.options[selectedArray.selectedIndex].innerHTML) {
+          addRow(commands[i].pos, commands[i].base);
+        }
+      }
+
+      resetRows();
+
+      if (selectedArray.options[selectedArray.selectedIndex].innerHTML !== "New") {
+
+        inputName.value = selectedArray.options[selectedArray.selectedIndex].innerHTML;
+      } else {
+        inputName.value = "name";
+      }
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+    function resetRows() {
+      arrayCommandRows.sort((a, b) => (a.tdPos.innerHTML > b.tdPos.innerHTML ? 1 : -1));
+
+      document.getElementById("baseHead").innerHTML = "";
+
+      for (var i = 0; i < arrayCommandRows.length; i++) {
+        document
+          .getElementById("baseHead")
+          .appendChild(arrayCommandRows[i].trCommand);
+      }
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+    function addRow(pos, base) {
+      let cmdRow = new CommandRow(pos);
+
+      for (var i = pos; i < arrayCommandRows.length; i++) {
+        arrayCommandRows[i].tdPos.innerHTML = i + 1;
+      }
+
+      arrayCommandRows.push(cmdRow);
+
+      cmdRow.initRow(pos, arrayBases, base);
+
+      cmdRow.aAdd.onclick = function () {
+        addRow(+cmdRow.tdPos.innerHTML + 1, 0);
+      };
+
+      cmdRow.aDelete.onclick = function () {
+        deleteRow(+cmdRow.tdPos.innerHTML);
+      };
+
+      cmdRow.selectBase.onclick = function () {
+        cmdRow.tdBas.innerHTML = cmdRow.selectBase.selectedIndex;
+      };
+
+      resetRows();
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+    function deleteRow(pos) {
+      for (var i = pos; i < arrayCommandRows.length; i++) {
+        arrayCommandRows[i].tdPos.innerHTML = i - 1;
+      }
+
+      arrayCommandRows.splice(pos, 1);
+
+      resetRows();
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------
+
+    function editArray() {
+      if (arrayCommandRows.length > 0) {
+        testTest.innerHTML = "TEST";
+        var arraySelect = selectedArray.options[selectedArray.selectedIndex].innerHTML;
+
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = "/crear";
+
+        const hiddenFieldPos = document.createElement('input');
+        const hiddenFieldBase = document.createElement('input');
+        const hiddenFieldArray = document.createElement('input');
+        hiddenFieldPos.type = 'hidden';
+        hiddenFieldBase.type = 'hidden';
+        hiddenFieldArray.type = 'hidden';
+        hiddenFieldPos.name = 'Pos';
+        hiddenFieldBase.name = 'Base';
+        hiddenFieldArray.name = 'Array';
+
+        form.appendChild(hiddenFieldPos);
+        form.appendChild(hiddenFieldBase);
+        form.appendChild(hiddenFieldArray);
+        document.body.appendChild(form);
+
+        if (arraySelect == "New") {
+
+          for (var i = 0; i < arrayCommandRows.length; i++) {
+
+            hiddenFieldPos.value = arrayCommandRows[i].tdPos.innerHTML;
+            hiddenFieldBase.value = arrayCommandRows[i].tdBas.innerHTML;
+            hiddenFieldArray.value = inputName.value;
+
+            form.submit();
+          }
+
+          uniqueLists.push(inputName.value);
+
+          var opt = document.createElement("option");
+          opt.value = uniqueLists.length;
+          opt.innerHTML = inputName.value;
+          selectedArray.appendChild(opt);
+
+          selectedArray.options[uniqueLists.length].selected = "selected";
+
+        }
+      }
+    }
+
+  </script>
+  <%- include('footer') -%>
