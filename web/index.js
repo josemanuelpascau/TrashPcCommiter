@@ -46,13 +46,13 @@ app.get('/', (req, res) => {
 })
 
 //Mostrar tabla de Productos
-app.get('/productos', (req, res) => {
+app.get('/commits', (req, res) => {
 	const sql = "SELECT * FROM Commands";
 	db.all(sql, [], (err, rows) => {
 		if (err) {
 			return console.error(err.message);
 		} else {
-			res.render("Productos.ejs", { modelo: rows });
+			res.render("Commits.ejs", { modelo: rows });
 			console.log({ modelo: rows });
 		}
 	})
@@ -66,14 +66,14 @@ app.get('/productos', (req, res) => {
 //POST /crear
 app.post('/crear', (req, res) => {
 	const sql = "INSERT INTO Commands(pos, base, array) VALUES(?,?,?)";
-	const nuevo_producto = [req.body.Pos, req.body.Base, req.body.Array];
+	const nuevo_commit = [req.body.Pos, req.body.Base, req.body.Array];
 	console.log(req.body.Pos.value);
-	db.run(sql, nuevo_producto, err => {
+	db.run(sql, nuevo_commit, err => {
 		if (err) {
 			return console.error(err.message);
 		}
 		else {
-			res.redirect("/productos");
+			res.redirect("/commits");
 		}
 	})
 });
@@ -99,7 +99,7 @@ app.post("/editar/:id", (req, res) => {
 			return console.error(err.message);
 		}
 		else {
-			res.redirect("/productos");
+			res.redirect("/commits");
 		}
 	});
 })
